@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electrical Load Calculator</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #dddddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        input, button { padding: 10px; margin-top: 5px; }
+        button { cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Electrical Load Calculator</h1>
+    <form id="loadForm">
+        <label for="epName">Name of Electrical Consumer (ЕП):</label>
+        <input type="text" id="epName" required><br><br>
+
+        <label for="numberOfEp">Number of EP (Pн, kW):</label>
+        <input type="number" id="numberOfEp" value="1" required><br><br>
+
+        <label for="powerFactor">Load Power Factor (cos φ):</label>
+        <input type="number" id="powerFactor" step="0.01" value="0.9" required><br><br>
+        
+        <label for="nominalPower">Nominal Power per EP (Pн, kW):</label>
+        <input type="number" id="nominalPower" value="100" required><br><br>
+        
+        <label for="utilizationCoefficient">Utilization Coefficient (КВ):</label>
+        <input type="number" id="utilizationCoefficient" step="0.01" value="0.75" required><br><br>
+        
+        <label for="reactivePowerCoefficient">Reactive Power Coefficient (tgφ):</label>
+        <input type="number" id="reactivePowerCoefficient" step="0.01" value="0.65" required><br><br>
+        
+        <button type="button" onclick="addLoad()">Add Load</button>
+        <button type="button" onclick="calculateTotals()">Calculate Totals</button>
+    </form>
+    
+    <h2>Entered Loads:</h2>
+    <table id="loadsTable">
+        <tr>
+            <th>EP Name</th>
+            <th>Total Active Load (Pp, kW)</th>
+            <th>Total Reactive Load (Qp, kvar)</th>
+            <th>Total Apparent Power (Sp, kVA)</th>
+        </tr>
+    </table>
+
+    <h2>Cumulative Results:</h2>
+    <div id="cumulativeResults">No data entered yet.</div>
+    
+    <script>
+        let loads = [];
+
+        function addLoad() {
+            const epName = document.getElementById('epName').value;
+            const numberOfEp = document.getElementById('numberOfEp').value;
+            const powerFactor = parseFloat(document.getElementById('powerFactor').value);
+            const nominalPower = parseFloat(document.getElementById('nominalPower').value);
+            const utilizationCoefficient = parseFloat(document.getElementById('utilizationCoefficient').value);
+            const reactivePowerCoefficient = parseFloat(document.getElementById('reactivePowerCoefficient').value);
+
+            const totalActiveLoad = nominalPower * utilizationCoefficient * numberOfEp;
+            const totalReactiveLoad = totalActiveLoad * reactivePowerCoefficient;
+            const totalApparentPower = Math.sqrt(Math.pow(totalActiveLoad, 2) + Math.pow(totalReactiveLoad, 2));
+
+            loads.push({
+                epName,
+                numberOfEp,
+                totalActiveLoad,
+                totalReactiveLoad,
+                totalApparentPower
+            });
+
+            updateTable();
+        }
+
+        function updateTable() {
+            const table = document.getElementById('loadsTable');
+            table.innerHTML = `
+                <tr>
+                    <th>EP Name</th>
+                    <th>Total Active Load (Pp, kW)</th>
+                    <th>Total Reactive Load (Qp, kvar)</th>
+                    <th>Total Apparent Power (Sp, kVA)</th>
+                </tr>
+            `;
+            loads.forEach(load => {
+                const row = table.insertRow(-1);
+                row.insertCell(0).textContent = load.epName + ' (' + load.numberOfEp + ')';
+                row.insertCell(1).textContent = load.totalActiveLoad.toFixed(2) + ' kW';
+                row.insertCell(2).textContent = load.totalReactiveLoad.toFixed(2) + ' kvar';
+                row.insertCell(3).textContent = load.totalApparentPower.toFixed(2) + ' kVA';
+            });
+        }
+
+        function calculateTotals() {
+            let totalActive = 0;
+            let totalReactive = 0;
+            let totalApparent = 0;
+
+            loads.forEach(load => {
+
+                totalActive += load.totalActiveLoad;
+                totalReactive += load.totalReactiveLoad;
+                totalApparent += load.totalApparentPower;
+            });
+
+            const results = `
+                <p>Total Active Load: ${totalActive.toFixed(2)} kW</p>
+                <p>Total Reactive Load: ${totalReactive.toFixed(2)} kvar</p>
+                <p>Total Apparent Power: ${totalApparent.toFixed(2)} kVA</p>
+            `;
+            document.getElementById('cumulativeResults').innerHTML = results;
+        }
+    </script>
+</body>
+</html>
